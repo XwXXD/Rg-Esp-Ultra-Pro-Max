@@ -30,7 +30,7 @@ if spawnsFolder then
         hl.FillTransparency = 1 
         hl.OutlineColor = color
         hl.OutlineTransparency = 0
-        hl.Enabled = false -- По умолчанию выключено для демонстрации работы кнопок
+        hl.Enabled = true -- По умолчанию выключено для демонстрации работы кнопок
         
         return group
     end
