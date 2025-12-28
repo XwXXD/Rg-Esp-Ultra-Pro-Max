@@ -199,7 +199,7 @@ local function createEspBtn(name)
     
     -- Функция обновления визуального состояния кнопки
     local function updateBtnVisual(state)
-        btn.BackgroundColor3 = state and Color3.fromRGB(255, 60, 60) or Color3.fromRGB(35, 35, 35)
+        btn.BackgroundColor3 = state and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(255, 60, 60)
     end
 
     btn.MouseButton1Click:Connect(function()
