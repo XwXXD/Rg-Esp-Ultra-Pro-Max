@@ -1,19 +1,19 @@
 local uis = game:GetService("UserInputService")
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
+local tweenService = game:GetService("TweenService") -- Добавлено для анимаций
 local lp = players.LocalPlayer
-local changing = false -- Переменная для отслеживания процесса смены клавиши
+local changing = false
 
--- 1. УДАЛЕНИЕ СТАРЫХ ВЕРСИЙ (ЧТОБЫ НЕ БЫЛО ДУБЛИКАТОВ)
+-- 1. УДАЛЕНИЕ СТАРЫХ ВЕРСИЙ
 for _, old in pairs(lp.PlayerGui:GetChildren()) do
     if old.Name == "UniversalGui_Fixed" then old:Destroy() end
 end
 
 -- ==========================================
--- 2. НАСТРОЙКА ESP (СОЗДАНИЕ ПОДСВЕТКИ)
+-- 2. НАСТРОЙКА ESP
 -- ==========================================
 local spawnsFolder = workspace:FindFirstChild("NPCSpawns")
-
 if spawnsFolder then
     local function createEspGroup(name, color)
         local group = spawnsFolder:FindFirstChild(name) 
@@ -21,17 +21,14 @@ if spawnsFolder then
             group = Instance.new("Model", spawnsFolder)
             group.Name = name
         end
-        
         local hl = group:FindFirstChildOfClass("Highlight")
         if not hl then
             hl = Instance.new("Highlight", group)
         end
-        
         hl.FillTransparency = 1 
         hl.OutlineColor = color
         hl.OutlineTransparency = 0
-        hl.Enabled = true -- По умолчанию выключено для демонстрации работы кнопок
-        
+        hl.Enabled = true 
         return group
     end
 
@@ -78,6 +75,17 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "UniversalGui_Fixed"
 ScreenGui.Parent = lp:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Enabled = true -- Скрыт в начале для анимации появления
+
+-- ПРИВЕТСТВЕННЫЙ ТЕКСТ
+local WelcomeLabel = Instance.new("TextLabel", ScreenGui)
+WelcomeLabel.Size = UDim2.new(0, 200, 0, 50)
+WelcomeLabel.Position = UDim2.new(0.5, -100, 1, 50) -- Начало за экраном (снизу)
+WelcomeLabel.BackgroundTransparency = 1
+WelcomeLabel.Text = "Esp Ultra Pro Max"
+WelcomeLabel.TextColor3 = Color3.new(1, 1, 1)
+WelcomeLabel.Font = Enum.Font.GothamBold
+WelcomeLabel.TextSize = 40
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Name = "MainFrame"
@@ -85,7 +93,9 @@ Main.Size = UDim2.new(0, 500, 0, 350)
 Main.Position = UDim2.new(0.5, -250, 0.5, -175)
 Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Main.Visible = false
 
 local Stroke = Instance.new("UIStroke", Main)
 Stroke.Thickness = 2
@@ -163,10 +173,7 @@ local function addButton(parent, text, layoutOrder, callback)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 14
-    
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0, 6)
-    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     btn.MouseButton1Click:Connect(callback)
     return btn
 end
@@ -183,41 +190,32 @@ local function addLabel(parent, text, layoutOrder)
     lbl.TextSize = 13
 end
 
--- --- НАПОЛНЕНИЕ СТРАНИЦ ---
-
+-- --- НАПОЛНЕНИЕ ---
 local pInfo = createPage("INFO", 1)
-addLabel(pInfo, "  User Information:", 1)
+addLabel(pInfo, "  Esp Ultra Pro Max (EUPM):", 1)
 addButton(pInfo, "Name: " .. lp.Name, 2, function() end)
 addButton(pInfo, "Display: " .. lp.DisplayName, 3, function() end)
-addButton(pInfo, "ID: " .. lp.UserId, 4, function() end)
+addButton(pInfo, "EUPM ver. 1.0", 4, function() end)
 
--- --- ESP PAGE С КРАСНЫМИ КНОПКАМИ ---
 local pEsp = createPage("ESP", 2)
 local espOrder = 1
 local function createEspBtn(name)
     local btn = addButton(pEsp, "Toggle " .. name, espOrder, function() end)
-    
-    -- Функция обновления визуального состояния кнопки
-    local function updateBtnVisual(state)
+    local function updateVisual(state)
         btn.BackgroundColor3 = state and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(255, 60, 60)
     end
-
     btn.MouseButton1Click:Connect(function()
         local folder = workspace:FindFirstChild("NPCSpawns")
         if folder then
             local model = folder:FindFirstChild(name)
             if model then
                 local hl = model:FindFirstChildOfClass("Highlight")
-                if hl then 
-                    hl.Enabled = not hl.Enabled 
-                    updateBtnVisual(hl.Enabled) -- Кнопка становится красной если включено
-                end
+                if hl then hl.Enabled = not hl.Enabled updateVisual(hl.Enabled) end
             end
         end
     end)
     espOrder = espOrder + 1
 end
-
 createEspBtn("Ghoul")
 createEspBtn("CCG")
 createEspBtn("Agro")
@@ -227,9 +225,6 @@ createEspBtn("Boss")
 
 local pMisc = createPage("MISC", 3)
 addButton(pMisc, "Speed 100", 1, function() lp.Character.Humanoid.WalkSpeed = 100 end)
-addButton(pMisc, "Jump 150", 2, function() lp.Character.Humanoid.JumpPower = 150 end)
-addButton(pMisc, "Reset Speed", 3, function() lp.Character.Humanoid.WalkSpeed = 16 lp.Character.Humanoid.JumpPower = 50 end)
-
 local flyBtn = addButton(pMisc, "Fly: OFF", 4, function()
     cfg.IsFlying = not cfg.IsFlying
     if cfg.IsFlying then
@@ -240,8 +235,6 @@ local flyBtn = addButton(pMisc, "Fly: OFF", 4, function()
         local bg = Instance.new("BodyGyro", root)
         bg.Name = "FlyGyro"
         bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.P = 9000
-        
         task.spawn(function()
             while cfg.IsFlying and root do
                 runService.RenderStepped:Wait()
@@ -267,45 +260,85 @@ runService.RenderStepped:Connect(function()
     end
 end)
 
--- --- SETTINGS ---
 local pSet = createPage("SETTINGS", 4)
-addLabel(pSet, "  Themes:", 1)
-
 local themeGridFrame = Instance.new("Frame", pSet)
-themeGridFrame.LayoutOrder = 2
 themeGridFrame.Size = UDim2.new(1, 0, 0, 100)
 themeGridFrame.BackgroundTransparency = 1
 local grid = Instance.new("UIGridLayout", themeGridFrame)
 grid.CellSize = UDim2.new(0, 100, 0, 35)
-grid.CellPadding = UDim2.new(0, 10, 0, 10)
 
 for name, color in pairs(cfg.Themes) do
     local tBtn = Instance.new("TextButton", themeGridFrame)
     tBtn.Text = name
     tBtn.BackgroundColor3 = color
     tBtn.TextColor3 = Color3.new(0,0,0)
-    tBtn.Font = Enum.Font.GothamBold
     Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0,6)
-    tBtn.MouseButton1Click:Connect(function()
-        Stroke.Color = color
-    end)
+    tBtn.MouseButton1Click:Connect(function() Stroke.Color = color end)
 end
 
-addLabel(pSet, "  Keybind:", 3)
 local bindBtn = addButton(pSet, "Key: " .. cfg.ToggleKey.Name, 4, function() end)
 bindBtn.MouseButton1Click:Connect(function()
-    changing = true -- Блокируем закрытие GUI
+    changing = true
     bindBtn.Text = "Press any key..."
     local conn
     conn = uis.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Keyboard then
             cfg.ToggleKey = input.KeyCode
             bindBtn.Text = "Key: " .. input.KeyCode.Name
-            task.wait(0.1) -- Небольшая задержка, чтобы нажатие не сработало на закрытие мгновенно
-            changing = false -- Разблокируем возможность закрытия
+            task.wait(0.1)
+            changing = false
             conn:Disconnect()
         end
     end)
+end)
+
+-- --- ЛОГИКА АНИМАЦИЙ ---
+
+local function ToggleMenu(state)
+    local targetSize = state and UDim2.new(0, 500, 0, 350) or UDim2.new(0, 0, 0, 0)
+    local targetPos = state and UDim2.new(0.5, -250, 0.5, -175) or UDim2.new(0.5, 0, 0.5, 0)
+    
+    if state then Main.Visible = true end
+    
+    local tween = tweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = targetSize,
+        Position = targetPos
+    })
+    
+    tween:Play()
+    if not state then
+        tween.Completed:Wait()
+        Main.Visible = false
+    end
+end
+
+-- ВСТУПИТЕЛЬНАЯ АНИМАЦИЯ (Приветствие -> Появление меню)
+task.spawn(function()
+    task.wait(1)
+    -- Прилет текста
+    tweenService:Create(WelcomeLabel, TweenInfo.new(20, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+        Rotation = 360
+    }):Play()
+
+    tweenService:Create(WelcomeLabel, TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, -100, 0.5, -25)
+    }):Play()
+    
+    task.wait(1.5)
+    
+    -- Уменьшение в 0
+    local shrink = tweenService:Create(WelcomeLabel, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0)
+    })
+    shrink:Play()
+    shrink.Completed:Wait()
+    WelcomeLabel:Destroy()
+    
+    -- Появление основного GUI
+    Main.Size = UDim2.new(0,0,0,0)
+    Main.Position = UDim2.new(0.5,0,0.5,0)
+    ToggleMenu(true)
 end)
 
 -- --- DRAG ---
@@ -330,11 +363,10 @@ uis.InputChanged:Connect(function(input)
     end
 end)
 
--- --- ОТКРЫТИЕ НА КЛАВИШУ (ИСПРАВЛЕНО) ---
+-- --- ОТКРЫТИЕ НА КЛАВИШУ ---
 uis.InputBegan:Connect(function(input, gpe)
-    -- Добавлена проверка changing == false, чтобы GUI не закрывалось при вводе нового бинда
     if not gpe and input.KeyCode == cfg.ToggleKey and not changing then
-        ScreenGui.Enabled = not ScreenGui.Enabled
+        ToggleMenu(not ScreenGui.Enabled)
     end
 end)
 
