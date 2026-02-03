@@ -49,7 +49,7 @@ if spawnsFolder then
             elseif obj.Name == "CCGSpawns" then obj.Parent = groups.CCG
             elseif obj.Name == "HumanSpawns" then obj.Parent = groups.Human
             elseif obj.Name == "GyakusatsuSpawn" then obj.Parent = groups.GYA
-            elseif obj.Name == "BossSpawn" then obj.Parent = groups.Boss
+            elseif obj.Name == "BossSpawns" then obj.Parent = groups.Boss
             end
         end
     end
@@ -298,17 +298,19 @@ local function ToggleMenu(state)
     local targetSize = state and UDim2.new(0, 500, 0, 350) or UDim2.new(0, 0, 0, 0)
     local targetPos = state and UDim2.new(0.5, -250, 0.5, -175) or UDim2.new(0.5, 0, 0.5, 0)
     
-    if state then Main.Visible = true end
-    
     local tween = tweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = targetSize,
         Position = targetPos
     })
-    
-    tween:Play()
     if not state then
+                 tween:Play()
         tween.Completed:Wait()
         Main.Visible = false
+    end
+
+    if state then 
+        Main.Visible = true 
+         tween:Play()
     end
 end
 
